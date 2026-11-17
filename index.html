@@ -935,8 +935,8 @@ function dayTimingHTML(data, iso) {
     if (winds.length < 24) html += '<p class="timing-note">Wind data is missing for some hours.</p>';
   } else html += '<p>Hourly wind data is unavailable for this day.</p>';
   html += '<p class="timing-note">Wind is sustained speed, not gusts. All speeds are included here, including below 14 mph. Rain windows are approximate and can change; precipitation may include snow.</p>';
-  html += '<details><summary>Hour-by-hour readings</summary><p class="timing-note">Rain totals cover the hour ending at the listed time. Chance is the hourly precipitation probability, where supplied. Wind is at the listed time.</p><table><thead><tr><th scope="col">Time</th><th scope="col">Rain (' + precipLabel() + ')</th><th scope="col">Chance</th><th scope="col">Wind</th></tr></thead><tbody>';
-  html += hours.map(h => '<tr><th scope="row">' + clock(h) + '</th><td>' + (h.rain === null ? 'Unavailable' : precipStr(h.rain)) + '</td><td>' + (h.pop === null ? '-' : Math.round(h.pop) + '%') + '</td><td>' + (h.wind === null ? 'Unavailable' : Math.round(h.wind) + ' mph') + '</td></tr>').join('');
+  html += '<details><summary>Hour-by-hour readings</summary><p class="timing-note">Rain totals cover the hour ending at the listed time. Blank rain cells mean zero rain; missing readings say Unavailable. Chance is the hourly precipitation probability, where supplied. Wind is at the listed time.</p><table><thead><tr><th scope="col">Time</th><th scope="col">Rain (' + precipLabel() + ')</th><th scope="col">Chance</th><th scope="col">Wind</th></tr></thead><tbody>';
+  html += hours.map(h => '<tr><th scope="row">' + clock(h) + '</th><td>' + (h.rain === null ? 'Unavailable' : h.rain === 0 ? '' : Number(precipStr(h.rain)) === 0 ? (state.precip === 'in' ? '&lt;0.01' : '&lt;0.1') : precipStr(h.rain)) + '</td><td>' + (h.pop === null ? '-' : Math.round(h.pop) + '%') + '</td><td>' + (h.wind === null ? 'Unavailable' : Math.round(h.wind) + ' mph') + '</td></tr>').join('');
   return html + '</tbody></table></details>';
 }
 function openDayTiming(data, iso, loc, trigger) {
