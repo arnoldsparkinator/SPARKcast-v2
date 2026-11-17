@@ -996,23 +996,23 @@ function hourlyChartSVG(a) {
     const y = chartH - bh;
     const op = (0.3 + 0.7 * (h.pop / 100)).toFixed(2);
     const title = fmtDate(h.iso.slice(0, 10), { weekday: "short", day: "numeric", month: "short" }) + " " + hourLabel(h.iso) + " — " + precipStr(h.rain) + " " + precipLabel() + ", " + h.pop + "% chance";
-    svg += '<rect class="bar" x="' + x + '" y="' + y + '" width="' + (hasWind ? 12 : barW) + '" height="' + bh + '" rx="4" fill="rgba(79,195,247,' + op + ')">' +
+    const hasHourWind = Number.isFinite(h.wind) && h.wind >= 14;
+    const wy = hasHourWind ? windY(h.wind) : chartH;
+    const windHeight = chartH - wy;
+    const windTitle = hasHourWind ? fmtDate(h.iso.slice(0, 10), { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + hourLabel(h.iso) + ': wind ' + h.wind.toFixed(1) + ' mph - ' + windDescription(h.wind).toLowerCase() : '';
+    const windBar = hasHourWind ? '<rect class="wind-bar" x="' + x + '" y="' + wy + '" width="' + barW + '" height="' + windHeight + '" rx="4" fill="#ffd166"><title>' + escapeHtml(windTitle) + '</title></rect>' : '';
+    // Order by rendered height, not by comparing unlike mph and mm values.
+    if (windHeight > bh) svg += windBar;
+    svg += '<rect class="bar" x="' + x + '" y="' + y + '" width="' + barW + '" height="' + bh + '" rx="4" fill="rgba(79,195,247,' + op + ')">' +
            '<title>' + escapeHtml(title) + '</title></rect>';
+    if (windHeight <= bh) svg += windBar;
     if (precipVal(h.rain) >= 0.05) {
-      svg += '<text x="' + (x + (hasWind ? 6 : barW / 2)) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="7" fill="#cfe6ff">' + precipStr(h.rain) + precipLabel() + '</text>';
+      svg += '<text x="' + (x + (barW / 2)) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="7" fill="#cfe6ff">' + precipStr(h.rain) + precipLabel() + '</text>';
     }
     if (i % 3 === 0) {
       svg += '<text x="' + (x + barW / 2) + '" y="' + (chartH + 15) + '" text-anchor="middle" font-size="9" fill="#9fb0cc">' + hourLabel(h.iso) + '</text>';
       svg += '<text x="' + (x + barW / 2) + '" y="' + (chartH + 27) + '" text-anchor="middle" font-size="9" fill="' + (h.pop >= 50 ? "#7ec8ff" : "#6f86b8") + '">' + h.pop + '%</text>';
     }
-  });
-  // Yellow wind bars share each hour with blue rain bars, without overlap.
-  hrs.forEach((h, i) => {
-    if (!Number.isFinite(h.wind) || h.wind < 14) return;
-    const x = pad + i * (barW + gap) + 14;
-    const y = windY(h.wind);
-    const title = fmtDate(h.iso.slice(0, 10), { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + hourLabel(h.iso) + ': wind ' + h.wind.toFixed(1) + ' mph - ' + windDescription(h.wind).toLowerCase();
-    svg += '<rect class="wind-bar" x="' + x + '" y="' + y + '" width="12" height="' + (chartH - y) + '" rx="2" fill="#ffd166"><title>' + escapeHtml(title) + '</title></rect>';
   });
   svg += '</svg>';
   let axis = '';
@@ -1139,7 +1139,7 @@ function renderMain() {
           '<span>Peak chance: <strong style="color:#cfe6ff">' + (a.maxNext72Pop || 0) + '%</strong></span>' +
         '</div>' +
       '</div>' +
-      '<div class="sub" style="margin-top:6px">Blue bars show hourly rain; opacity = rain chance (% every 3 hours). Yellow bars show wind speed (not gusts) at 14 mph and above, using the left mph scale. No yellow bar means lower or unavailable wind. Day labels mark each new day.</div>' +
+      '<div class="sub" style="margin-top:6px">Blue bars show hourly rain; opacity = rain chance (% every 3 hours). Yellow bars show wind speed (not gusts) at 14 mph and above on the left mph scale. Bars overlap: the shorter bar is in front. No yellow bar means lower or unavailable wind. Day labels mark each new day.</div>' +
       '<div class="sub wind-key" style="margin-top:8px">' + windSummary(a) + '</div>' +
       '<div class="hourly-chart-layout">' + hourlyChartSVG(a) + '</div>' +
     '</section>' +
