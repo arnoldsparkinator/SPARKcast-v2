@@ -996,34 +996,24 @@ function hourlyChartSVG(a) {
     const y = chartH - bh;
     const op = (0.3 + 0.7 * (h.pop / 100)).toFixed(2);
     const title = fmtDate(h.iso.slice(0, 10), { weekday: "short", day: "numeric", month: "short" }) + " " + hourLabel(h.iso) + " — " + precipStr(h.rain) + " " + precipLabel() + ", " + h.pop + "% chance";
-    svg += '<rect class="bar" x="' + x + '" y="' + y + '" width="' + barW + '" height="' + bh + '" rx="4" fill="rgba(79,195,247,' + op + ')">' +
+    svg += '<rect class="bar" x="' + x + '" y="' + y + '" width="' + (hasWind ? 12 : barW) + '" height="' + bh + '" rx="4" fill="rgba(79,195,247,' + op + ')">' +
            '<title>' + escapeHtml(title) + '</title></rect>';
     if (precipVal(h.rain) >= 0.05) {
-      svg += '<text x="' + (x + barW / 2) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="7" fill="#cfe6ff">' + precipStr(h.rain) + precipLabel() + '</text>';
+      svg += '<text x="' + (x + (hasWind ? 6 : barW / 2)) + '" y="' + (y - 4) + '" text-anchor="middle" font-size="7" fill="#cfe6ff">' + precipStr(h.rain) + precipLabel() + '</text>';
     }
     if (i % 3 === 0) {
       svg += '<text x="' + (x + barW / 2) + '" y="' + (chartH + 15) + '" text-anchor="middle" font-size="9" fill="#9fb0cc">' + hourLabel(h.iso) + '</text>';
       svg += '<text x="' + (x + barW / 2) + '" y="' + (chartH + 27) + '" text-anchor="middle" font-size="9" fill="' + (h.pop >= 50 ? "#7ec8ff" : "#6f86b8") + '">' + h.pop + '%</text>';
     }
   });
-  // A missing or sub-threshold hour ends the segment. Never bridge a calm gap.
-  let segment = [];
-  function finishWindSegment() {
-    if (!segment.length) return;
-    if (segment.length > 1) {
-      svg += '<polyline class="wind-line" points="' + segment.map(p => p.x + ',' + p.y).join(' ') + '" fill="none" stroke="#ffd166" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
-    }
-    segment.forEach(p => {
-      svg += '<circle class="wind-point" cx="' + p.x + '" cy="' + p.y + '" r="3" fill="#ffd166" stroke="#172239" stroke-width="1"><title>' + escapeHtml(p.title) + '</title></circle>';
-    });
-    segment = [];
-  }
+  // Yellow wind bars share each hour with blue rain bars, without overlap.
   hrs.forEach((h, i) => {
-    if (!Number.isFinite(h.wind) || h.wind < 14) { finishWindSegment(); return; }
-    segment.push({ x: pad + i * (barW + gap) + barW / 2, y: windY(h.wind),
-      title: fmtDate(h.iso.slice(0, 10), { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + hourLabel(h.iso) + ': wind ' + h.wind.toFixed(1) + ' mph - ' + windDescription(h.wind).toLowerCase() });
+    if (!Number.isFinite(h.wind) || h.wind < 14) return;
+    const x = pad + i * (barW + gap) + 14;
+    const y = windY(h.wind);
+    const title = fmtDate(h.iso.slice(0, 10), { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + hourLabel(h.iso) + ': wind ' + h.wind.toFixed(1) + ' mph - ' + windDescription(h.wind).toLowerCase();
+    svg += '<rect class="wind-bar" x="' + x + '" y="' + y + '" width="12" height="' + (chartH - y) + '" rx="2" fill="#ffd166"><title>' + escapeHtml(title) + '</title></rect>';
   });
-  finishWindSegment();
   svg += '</svg>';
   let axis = '';
   if (hasWind) {
@@ -1145,11 +1135,11 @@ function renderMain() {
         '<h3>Next 72 hours</h3>' +
         '<div class="chart-legend">' +
           '<span>Rain next 72h: <strong style="color:#cfe6ff">' + precipStr(a.next72Rain) + ' ' + precipLabel() + '</strong></span>' +
-          '<span class="wind-key">Wind line: 14+ mph</span>' +
+          '<span class="wind-key">Wind bars: 14+ mph</span>' +
           '<span>Peak chance: <strong style="color:#cfe6ff">' + (a.maxNext72Pop || 0) + '%</strong></span>' +
         '</div>' +
       '</div>' +
-      '<div class="sub" style="margin-top:6px">Each bar shows the rain expected that hour; bar opacity = chance of rain (% every 3 hours). Day labels mark each new day. Gold line = wind speed (not gusts), 14 mph and above; gaps mean lower or unavailable wind.</div>' +
+      '<div class="sub" style="margin-top:6px">Blue bars show hourly rain; opacity = rain chance (% every 3 hours). Yellow bars show wind speed (not gusts) at 14 mph and above, using the left mph scale. No yellow bar means lower or unavailable wind. Day labels mark each new day.</div>' +
       '<div class="sub wind-key" style="margin-top:8px">' + windSummary(a) + '</div>' +
       '<div class="hourly-chart-layout">' + hourlyChartSVG(a) + '</div>' +
     '</section>' +
