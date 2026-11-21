@@ -915,7 +915,7 @@ function dayTimingHTML(data, iso) {
     const sunHrs = Math.round(sunSecs / 360) / 10;
     sunBlock += '<p><strong>' + sunHrs + (sunHrs === 1 ? ' hour' : ' hours') + '</strong> of bright sunshine.</p>';
   } else sunBlock += '<p>Sunshine duration is unavailable for this day from the selected forecast model.</p>';
-  sunBlock += '<p class="timing-note">Sunshine duration counts time with bright direct sunshine, not total daylight. Zero hours means a fully overcast day; missing data shows as unavailable, never as zero.</p>';
+  sunBlock += '<p class="timing-note">Sunshine duration counts time with bright direct sunshine, not total daylight. Missing data shows as unavailable, never as zero.</p>';
   const snowCm = sunIdx >= 0 && data.daily.snowfall_sum && Number.isFinite(data.daily.snowfall_sum[sunIdx]) ? data.daily.snowfall_sum[sunIdx] : null;
   let snowBlock = '<h3>Snowfall</h3>';
   if (snowCm !== null) {
